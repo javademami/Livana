@@ -5,7 +5,7 @@ import Header from './../components/Header'
 export default function Home() {
   return (
     <>
-    <div className='container mx-auto px-4 py-1'><Header /></div>
+    <div className='container mx-auto px-4'><Header /></div>
       
       <main>
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
