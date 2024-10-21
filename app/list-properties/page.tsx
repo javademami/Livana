@@ -13,8 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Header from '../../components/Header'; // Adjust the path according to your structure
-import { Upload } from 'lucide-react'; // اضافه کردن Import
-import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
+import { SignedIn, SignedOut, RedirectToSignIn, useUser } from '@clerk/nextjs'; // Import useUser برای دریافت اطلاعات کاربر
 
 // Zod schema for form validation
 const formSchema = z.object({
@@ -44,6 +43,7 @@ export default function ListPropertyPage() {
     zipCode: "",
   });
 
+  const { user } = useUser(); // دریافت اطلاعات کاربر
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: formData,
@@ -91,7 +91,7 @@ export default function ListPropertyPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...values, imageUrl }), // ارسال مقادیر فرم و URL تصویر
+        body: JSON.stringify({ ...values, imageUrl, userId: user.id }), // اضافه کردن userId
       });
 
       if (response.ok) {

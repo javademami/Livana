@@ -1,4 +1,3 @@
-// app/rent/page.jsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -15,6 +14,8 @@ export default function RentPage() {
   const [priceRange, setPriceRange] = useState([500, 5000]);
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('');
+  const [bedrooms, setBedrooms] = useState<number | null>(null);
+  const [bathrooms, setBathrooms] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,9 +44,33 @@ export default function RentPage() {
     }
   };
 
-  const handleSearch = () => {
-    // اینجا می‌توانید منطق جستجو را پیاده‌سازی کنید
-    console.log('Searching with:', { location, propertyType, priceRange });
+  const handleSearch = async () => {
+    // پارامترها را به API /api/filter ارسال می‌کنیم
+    const params = new URLSearchParams({
+      location,
+      propertyType,
+      minPrice: priceRange[0].toString(),
+      maxPrice: priceRange[1].toString(),
+      bedrooms: bedrooms?.toString() || '',
+      bathrooms: bathrooms?.toString() || ''
+    });
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/filter?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch filtered properties');
+      }
+      const data = await res.json();
+      setProperties(data.properties);
+    } catch (error) {
+      console.error('Error fetching filtered properties:', error);
+      setError('Failed to load properties. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,12 +82,15 @@ export default function RentPage() {
       {/* Search Section */}
       <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg mb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Input Location */}
           <Input 
             type="text" 
             placeholder="Location" 
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
+
+          {/* Select Property Type */}
           <select 
             className="w-full p-2 border rounded"
             value={propertyType}
@@ -73,6 +101,8 @@ export default function RentPage() {
             <option value="house">House</option>
             <option value="condo">Condo</option>
           </select>
+
+          {/* Price Range Slider */}
           <div className="flex items-center space-x-4">
             <span>${priceRange[0]}</span>
             <Slider
@@ -86,6 +116,27 @@ export default function RentPage() {
             <span>${priceRange[1]}</span>
           </div>
         </div>
+
+        {/* Bedrooms and Bathrooms Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Bedrooms */}
+          <Input 
+            type="number"
+            placeholder="Bedrooms"
+            value={bedrooms || ''}
+            onChange={(e) => setBedrooms(Number(e.target.value))}
+          />
+
+          {/* Bathrooms */}
+          <Input 
+            type="number"
+            placeholder="Bathrooms"
+            value={bathrooms || ''}
+            onChange={(e) => setBathrooms(Number(e.target.value))}
+          />
+        </div>
+
+        {/* Search Button */}
         <Button className="w-full md:w-auto" onClick={handleSearch}>
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
@@ -93,17 +144,6 @@ export default function RentPage() {
 
       {/* Main Content */}
       <div className="flex flex-col md:flex-row gap-8">
-        <div className="w-full md:w-1/4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* اینجا می‌توانید فیلترهای اضافی اضافه کنید */}
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="w-full md:w-3/4">
           {loading && <p>Loading properties...</p>}
           {error && <p className="text-red-500">{error}</p>}
